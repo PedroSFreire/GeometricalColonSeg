@@ -1,11 +1,9 @@
 import nibabel as nib
 import numpy as np
 import numpy
-import itk
 import math
 from scipy.ndimage import label
 from scipy.ndimage import sobel
-from scipy.ndimage import uniform_filter
 import cv2
 from medpy.filter.smoothing import anisotropic_diffusion
 
@@ -432,7 +430,7 @@ def create_pockets():
 
 
 
-print("Please provide file path or name if in the same folder.")
+print("Please provide file path or name if in the same folder:")
 filePath = input()
 sobelY = np.array
 img_data = load_nii(filePath)
