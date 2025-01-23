@@ -234,7 +234,7 @@ def find_flat():
     grad_z = sobel(total_labels, axis=2)
 
     #DEBUG PRINTS
-    output = nib.Nifti1Image(grad_x, nii.affine)
+    '''output = nib.Nifti1Image(grad_x, nii.affine)
     nib.save(output, "sobelX.nii")
 
     output = nib.Nifti1Image(grad_y, nii.affine)
@@ -242,7 +242,7 @@ def find_flat():
 
     output = nib.Nifti1Image(grad_z, nii.affine)
     nib.save(output, "sobelZ.nii")
-
+    '''
 
     shape = total_labels.shape
     #Per axis sobel operator stacked to give a gradient matrix
@@ -402,8 +402,8 @@ def create_pockets():
     del list_components[0]
 
     #DEBUG print
-    outputParsed = nib.Nifti1Image(flat_labels, nii.affine)
-    nib.save(outputParsed, "flatLabels.nii")
+    #outputParsed = nib.Nifti1Image(flat_labels, nii.affine)
+    #nib.save(outputParsed, "flatLabels.nii")
 
     valid_components = numpy.zeros(counter - 1).astype(np.int16)
     valid_flats = numpy.zeros(flat_counts).astype(np.int16)
@@ -421,8 +421,8 @@ def create_pockets():
     for i in range(flat_counts):
         if valid_flats[i] != 0:
             expandLabel(label_list[i])
-            outputParsed = nib.Nifti1Image(label_list[i], nii.affine)
-            nib.save(outputParsed, "flatLabels.nii")
+            #outputParsed = nib.Nifti1Image(label_list[i], nii.affine)
+            #nib.save(outputParsed, "flatLabels.nii")
             final_label += label_list[i]
 
     for pos in point_list:
@@ -432,10 +432,11 @@ def create_pockets():
 
 
 
-
+print("Please provide file path or name if in the same folder.")
+filePath = input()
 sobelY = np.array
-img_data = load_nii("Test.nii")
-nii = nib.load("Test.nii")
+img_data = load_nii(filePath)
+nii = nib.load(filePath)
 final_label = numpy.zeros(img_data.shape).astype(np.int16)
 threshold_data = img_data
 
@@ -443,8 +444,8 @@ threshold_data = img_data
 filter_stack()
 
 
-output = nib.Nifti1Image(threshold_data, nii.affine)
-nib.save(output,"testLabel.nii")
+#output = nib.Nifti1Image(threshold_data, nii.affine)
+#nib.save(output,"testLabel.nii")
 
 #segment air and remove extra components
 list_components, counts =segment()
@@ -453,8 +454,8 @@ expansion_reg, flat_counts, flat_labels , label_list = find_flat()
 
 
 
-outputParsed = nib.Nifti1Image(expansion_reg, nii.affine)
-nib.save(outputParsed, "outputParsed.nii")
+#outputParsed = nib.Nifti1Image(expansion_reg, nii.affine)
+#nib.save(outputParsed, "outputParsed.nii")
 
 
 #create contrast enhanced imagee
@@ -464,17 +465,20 @@ create_pockets()
 
 final_label = final_label + expansion_reg
 
+nameParts = filePath.split('.')
+nameParts2 = nameParts[0].split('\\')
+name = nameParts2[-1] +"Seg.nii"
 output = nib.Nifti1Image(final_label, nii.affine)
-nib.save(output,"finalSegmentation.nii")
+nib.save(output,name)
 
-output = nib.Nifti1Image(img_data, nii.affine)
-nib.save(output,"BaseContrast.nii")
+#output = nib.Nifti1Image(img_data, nii.affine)
+#nib.save(output,"BaseContrast.nii")
 
 
 
 print("time elapsed: {:.2f}s".format(time.time() - start_time))
 # Convert to itk
-itk_components = []
+#itk_components = []
 # for i in range(counts.size):
 #    itk_image = itk.image_from_array(list_components[i].data)
 #    itk_image.SetSpacing(np.sqrt((list_components[i].affine ** 2).sum(axis=0))[:3])
