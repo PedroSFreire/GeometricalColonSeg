@@ -31,7 +31,6 @@ pip install nibabel numpy scipy opencv-python medpy
 ## Pipeline Overview
 
 
-# Segmentation Process
 
 1. **Air Region Segmentation**:
    - Segments air-filled regions using thresholding.
