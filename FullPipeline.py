@@ -30,7 +30,7 @@ def vec3_dot(vec1, vec2):
     return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2]
 
 
-def threshold_image(img_data, threshold=-700):
+def threshold_image(img_data, threshold=-900):
     binary_img = img_data < threshold  # Convert to binary (1 for label, 0 for background)
     return binary_img
 
@@ -155,34 +155,34 @@ def expandVoxel(working_label,voxel,min,max):
         right[aux] += voxel[aux]
         back[aux] += voxel[aux]
     if up[2] < shape[2]  :
-        if working_label[tuple(up)] == 0 and sobelY[tuple(up)]<0:
+        if final_label[tuple(up)] == 0 and sobelY[tuple(up)]<0:
             to_expand.append(up)
             working_label[tuple(up)] = 1
             final_label[tuple(up)] = 1
 
     if left[1] < shape[1] and left[1] < max and left[1] > min:
-        if working_label[tuple(left)] == 0 and sobelY[tuple(left)]<0:
+        if final_label[tuple(left)] == 0 and sobelY[tuple(left)]<0:
             to_expand.append(left)
             working_label[tuple(left)] = 1
             final_label[tuple(left)] = 1
     if front[0] < shape[0]:
-        if working_label[tuple(front)] == 0 and sobelY[tuple(front)]<0:
+        if final_label[tuple(front)] == 0 and sobelY[tuple(front)]<0:
             to_expand.append(front)
             working_label[tuple(front)] = 1
             final_label[tuple(front)] = 1
     if down[2] > 0 :
-        if working_label[tuple(down)] == 0 and sobelY[tuple(down)]<0:
+        if final_label[tuple(down)] == 0 and sobelY[tuple(down)]<0:
             to_expand.append(down)
             working_label[tuple(down)] = 1
             final_label[tuple(down)] = 1
 
     if right[1] > 0 and right[1] < max and right[1] > min:
-        if working_label[tuple(right)] == 0 and sobelY[tuple(right)]<0:
+        if final_label[tuple(right)] == 0 and sobelY[tuple(right)]<0:
             to_expand.append(right)
             working_label[tuple(right)] = 1
             final_label[tuple(right)] =1
     if back[0] > 0:
-        if working_label[tuple(back)] == 0 and sobelY[tuple(back)]<0:
+        if final_label[tuple(back)] == 0 and sobelY[tuple(back)]<0:
             to_expand.append(back)
             working_label[tuple(back)] = 1
             final_label[tuple(back)] = 1
@@ -370,7 +370,7 @@ def create_pockets():
     list_components = []
 
     point_list = []
-    #initial treshold of liquids
+    #initial threshold of liquids
     for posX in range(shape[0]):
         for posY in range(shape[1]):
             for posZ in range(shape[2]):
@@ -421,8 +421,8 @@ def create_pockets():
     for i in range(flat_counts):
         if valid_flats[i] != 0:
             expandLabel(label_list[i])
-            outputParsed = nib.Nifti1Image(label_list[i], nii.affine)
-            nib.save(outputParsed, "flatLabels.nii")
+            #outputParsed = nib.Nifti1Image(label_list[i], nii.affine)
+            #nib.save(outputParsed, "flatLabels.nii")
             final_label += label_list[i]
 
     for pos in point_list:
