@@ -53,7 +53,7 @@ def segment():
     # Remove small components
     filtered_labels, counts = np.unique(label_img, return_counts=True)
     for i in range(counts.size):
-        if counts[i] < 100:
+        if counts[i] < 10000:
             label_img[label_img == i] = 0
         else:
             new_component = label_img == i
@@ -371,7 +371,7 @@ def create_pockets():
         for posY in range(shape[1]):
             for posZ in range(shape[2]):
                 pos = posX, posY, posZ
-                if threshold_data[pos] > 220:
+                if threshold_data[pos] > 210:
                     high_labels[pos] = 1
                     point_list.append(pos)
                 if flat_labels[pos] > 0:
@@ -386,7 +386,7 @@ def create_pockets():
     filtered_labels, counts = np.unique(labeled_img, return_counts=True)
     counter = 0
     for i in range(counts.size):
-        if counts[i] < 5000 :
+        if counts[i] < 5000 or counts[i] >  0.02 * img_data.shape[0]* img_data.shape[1]*  img_data.shape[2]:
             labeled_img[labeled_img == i] = 0
         else:
 
