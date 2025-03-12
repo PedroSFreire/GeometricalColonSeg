@@ -17,7 +17,7 @@ def load_nii(file_path):
     # Loads the NIfTI
     nii_img = nib.load(file_path)  # Load .nii.gz file
     img_data = nii_img.get_fdata()  # Extract the data
-    return img_data
+    return img_data , nii_img.affine
 
 
 def vec3_length(vec):
@@ -28,7 +28,7 @@ def vec3_dot(vec1, vec2):
     return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2]
 
 
-def threshold_image(img_data, threshold=-900):
+def threshold_image(img_data, threshold=-600):
     binary_img = img_data < threshold  # Convert to binary (1 for label, 0 for background)
     return binary_img
 
@@ -53,7 +53,7 @@ def segment():
     # Remove small components
     filtered_labels, counts = np.unique(label_img, return_counts=True)
     for i in range(counts.size):
-        if counts[i] < 100000:
+        if counts[i] < 100:
             label_img[label_img == i] = 0
         else:
             new_component = label_img == i
@@ -232,15 +232,15 @@ def find_flat():
     grad_z = sobel(total_labels, axis=2)
 
     #DEBUG PRINTS
-    '''output = nib.Nifti1Image(grad_x, nii.affine)
+    output = nib.Nifti1Image(grad_x, affine)
     nib.save(output, "sobelX.nii")
 
-    output = nib.Nifti1Image(grad_y, nii.affine)
+    output = nib.Nifti1Image(grad_y, affine)
     nib.save(output, "sobelY.nii")
 
-    output = nib.Nifti1Image(grad_z, nii.affine)
+    output = nib.Nifti1Image(grad_z, affine)
     nib.save(output, "sobelZ.nii")
-    '''
+
 
     shape = total_labels.shape
     #Per axis sobel operator stacked to give a gradient matrix
@@ -248,48 +248,43 @@ def find_flat():
     for x in range(20,shape[0]-20):
         for y in range(20,shape[1]-20):
             for z in range(20,shape[2]-20):
-
-                if vec3_length(surface_normals[x][y][z]) > 0:
-                    #normalize surface normals
-                    surface_normals[x][y][z] = surface_normals[x][y][z] / vec3_length(surface_normals[x][y][z])
-                    #only select voxels with normal similar to "pointing down"
-                    if vec3_dot(surface_normals[x][y][z], [0, -1, 0]) >= 0.6 and sobelY[x][y][z] < 0:
+                if  sobelY[x][y][z] < 0:
                         
                         #all vertically close voxels are examined to improve layer thickness
                         # no border
 
-                        if img_data[x][y - 1][z] < -600 and img_data[x][y][z] > 90:
-                            expansion_labels[x][y + 1][z] = 1
-                            expansion_labels[x][y][z] = 1
-                            expansion_labels[x][y - 1][z] = 1
+                    if img_data[x][y - 1][z] < -600 and img_data[x][y][z] > 90:
+                        expansion_labels[x][y + 1][z] = 1
+                        expansion_labels[x][y][z] = 1
+                        expansion_labels[x][y - 1][z] = 1
                         # one voxel thick layer
-                        if img_data[x][y - 1][z] < -600 and img_data[x][y + 1][z] > 90:
-                            expansion_labels[x][y + 1][z] = 1
-                            expansion_labels[x][y][z] = 1
-                            expansion_labels[x][y - 1][z] = 1
+                    if img_data[x][y - 1][z] < -600 and img_data[x][y + 1][z] > 90:
+                        expansion_labels[x][y + 1][z] = 1
+                        expansion_labels[x][y][z] = 1
+                        expansion_labels[x][y - 1][z] = 1
                         # two voxels thick layer
-                        elif img_data[x][y + 2][z] < -600 and img_data[x][y + 1][z] > 90:
-                            expansion_labels[x][y - 2][z] = 1
-                            expansion_labels[x][y + 1][z] = 1
-                            expansion_labels[x][y][z] = 1
-                            expansion_labels[x][y - 1][z] = 1
-                        elif img_data[x][y - 1][z] < -600 and img_data[x][y + 2][z] > 90:
-                            expansion_labels[x][y + 1][z] = 1
-                            expansion_labels[x][y][z] = 1
-                            expansion_labels[x][y - 1][z] = 1
+                    elif img_data[x][y + 2][z] < -600 and img_data[x][y + 1][z] > 90:
+                        expansion_labels[x][y - 2][z] = 1
+                        expansion_labels[x][y + 1][z] = 1
+                        expansion_labels[x][y][z] = 1
+                        expansion_labels[x][y - 1][z] = 1
+                    elif img_data[x][y - 1][z] < -600 and img_data[x][y + 2][z] > 90:
+                        expansion_labels[x][y + 1][z] = 1
+                        expansion_labels[x][y][z] = 1
+                        expansion_labels[x][y - 1][z] = 1
                         # three voxels thick layer
-                        elif img_data[x][y + 3][z] < -600 and img_data[x][y + 1][z] > 90:
-                            expansion_labels[x][y + 1][z] = 1
-                            expansion_labels[x][y][z] = 1
-                            expansion_labels[x][y - 1][z] = 1
-                        elif img_data[x][y - 1][z] < -600 and img_data[x][y + 3][z] > 90:
-                            expansion_labels[x][y + 1][z] = 1
-                            expansion_labels[x][y][z] = 1
-                            expansion_labels[x][y - 1][z] = 1
-                        elif img_data[x][y - 2][z] < -600 and img_data[x][y + 2][z] > 90:
-                            expansion_labels[x][y + 1][z] = 1
-                            expansion_labels[x][y][z] = 1
-                            expansion_labels[x][y - 1][z] = 1
+                    elif img_data[x][y + 3][z] < -600 and img_data[x][y + 1][z] > 90:
+                        expansion_labels[x][y + 1][z] = 1
+                        expansion_labels[x][y][z] = 1
+                        expansion_labels[x][y - 1][z] = 1
+                    elif img_data[x][y - 1][z] < -600 and img_data[x][y + 3][z] > 90:
+                        expansion_labels[x][y + 1][z] = 1
+                        expansion_labels[x][y][z] = 1
+                        expansion_labels[x][y - 1][z] = 1
+                    elif img_data[x][y - 2][z] < -600 and img_data[x][y + 2][z] > 90:
+                        expansion_labels[x][y + 1][z] = 1
+                        expansion_labels[x][y][z] = 1
+                        expansion_labels[x][y - 1][z] = 1
 
                         # expansion_labels[x][y + 2][z] = 1
                         # expansion_labels[x][y + 1][z] = 1
@@ -306,11 +301,11 @@ def find_flat():
 
     #remove small flat labels and create a list of labels
     for i in range(voxel_count.size):
-        if voxel_count[i] < 200:
+        if voxel_count[i] < 150:
             count_pass -= 1
         elif i != 0:
             new_cmp = flat_components == count
-            new_cmp = new_cmp.astype(numpy.int16)
+            new_cmp = new_cmp.astype(numpy.int8)
             list_fl.append(new_cmp)
             count += 1
 
@@ -323,9 +318,12 @@ def find_flat():
 def filter_stack():
     clamp()
 
+
     histogram_filter()
 
+
     anisotropic()
+
 
 def  histogram_filter():
     global threshold_data
@@ -373,7 +371,7 @@ def create_pockets():
         for posY in range(shape[1]):
             for posZ in range(shape[2]):
                 pos = posX, posY, posZ
-                if threshold_data[pos] > 210:
+                if threshold_data[pos] > 220:
                     high_labels[pos] = 1
                     point_list.append(pos)
                 if flat_labels[pos] > 0:
@@ -383,10 +381,12 @@ def create_pockets():
 
     #conected components to separate each liquid pocket
     labeled_img, num_features = label(high_labels)
+    outputParsed = nib.Nifti1Image(labeled_img,affine)
+    nib.save(outputParsed, "liquidPocketsLabels.nii")
     filtered_labels, counts = np.unique(labeled_img, return_counts=True)
     counter = 0
     for i in range(counts.size):
-        if counts[i] < 5000 or counts[i] >  0.02 * img_data.shape[0]* img_data.shape[1]*  img_data.shape[2]:
+        if counts[i] < 5000 :
             labeled_img[labeled_img == i] = 0
         else:
 
@@ -400,7 +400,7 @@ def create_pockets():
     del list_components[0]
 
     #DEBUG print
-    #outputParsed = nib.Nifti1Image(flat_labels, nii.affine)
+    #outputParsed = nib.Nifti1Image(flat_labels,affine)
     #nib.save(outputParsed, "flatLabels.nii")
 
     valid_components = numpy.zeros(counter - 1).astype(np.int16)
@@ -419,13 +419,13 @@ def create_pockets():
     for i in range(flat_counts):
         if valid_flats[i] != 0:
             expandLabel(label_list[i])
-            #outputParsed = nib.Nifti1Image(label_list[i], nii.affine)
+            #outputParsed = nib.Nifti1Image(label_list[i],affine)
             #nib.save(outputParsed, "flatLabels.nii")
             final_label += label_list[i]
 
     for pos in point_list:
         if final_label[pos] != 0:
-            img_data[pos] = -1200
+            threshold_data[pos] = -1200
 
 
 
@@ -433,8 +433,7 @@ def create_pockets():
 print("Please provide file path or name if in the same folder:")
 filePath = input()
 sobelY = np.array
-img_data = load_nii(filePath)
-nii = nib.load(filePath)
+img_data,affine = load_nii(filePath)
 final_label = numpy.zeros(img_data.shape).astype(np.int16)
 threshold_data = img_data
 
@@ -442,18 +441,14 @@ threshold_data = img_data
 filter_stack()
 
 
-#output = nib.Nifti1Image(threshold_data, nii.affine)
-#nib.save(output,"testLabel.nii")
+output = nib.Nifti1Image(threshold_data,affine)
+nib.save(output,"testLabel.nii")
 
 #segment air and remove extra components
 list_components, counts =segment()
 expansion_reg, flat_counts, flat_labels , label_list = find_flat()
 
 
-
-
-#outputParsed = nib.Nifti1Image(expansion_reg, nii.affine)
-#nib.save(outputParsed, "outputParsed.nii")
 
 
 #create contrast enhanced imagee
@@ -466,10 +461,10 @@ final_label = final_label + expansion_reg
 nameParts = filePath.split('.')
 nameParts2 = nameParts[0].split('\\')
 name = nameParts2[-1] +"Seg.nii"
-output = nib.Nifti1Image(final_label, nii.affine)
+output = nib.Nifti1Image(final_label, affine)
 nib.save(output,name)
 
-#output = nib.Nifti1Image(img_data, nii.affine)
+#output = nib.Nifti1Image(img_data, affine)
 #nib.save(output,"BaseContrast.nii")
 
 
