@@ -93,7 +93,7 @@ def segment():
                     remove_ids[id] += 1
 
     for id in range(len(list_components)):
-        if remove_ids[id] < 10:
+        if remove_ids[id] < 100:
             remove_ids[id] = 0
         else:
             remove_ids[id] = 1
